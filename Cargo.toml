@@ -1,0 +1,11 @@
+[package]
+name = "desktop_link_metro"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than crates.io
+
+macroquad = "*"
