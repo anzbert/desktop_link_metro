@@ -1,13 +1,14 @@
-// mod vis;
+mod constants;
+mod vis;
 
 use macroquad::prelude::*;
 
-// Macroquad WINDOW CONFIG:
+// MQ WINDOW CONFIG:
 fn window_conf() -> Conf {
     Conf {
-        window_title: "boink".to_owned(),
-        window_width: 800,
-        window_height: 600,
+        window_title: "rusty metro".to_owned(),
+        window_width: constants::WIDTH,
+        window_height: constants::HEIGHT,
         high_dpi: false,
         fullscreen: false,
         // sample_count: 1,
@@ -46,7 +47,6 @@ async fn main() {
             clear_background(GRAY);
 
             // draw LEDS
-            // ..
         });
 
         next_frame().await
