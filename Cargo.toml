@@ -9,3 +9,4 @@ edition = "2021"
 ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than crates.io
 
 macroquad = "*"
+# nalgebra = { version = "*", default-features = false } # no-std nalgebra
