@@ -19,7 +19,9 @@ fn window_conf() -> Conf {
 // MAIN:
 #[macroquad::main(window_conf)]
 async fn main() {
-    // let link = ableton_link::Link::new(120.0);
+    let link = ableton_link::Link::new(120.0);
+    let clock = link.clock();
+    let quantum = 4.0;
 
     loop {
         // PROCESS INPUT:
@@ -30,10 +32,22 @@ async fn main() {
         }
 
         // GET CURRENT TEMPO AND PHASE
-        // ...
+        link.with_app_session_state(|session_state| {
+            let time = clock.micros();
+            let tempo = session_state.tempo();
+            let playing = session_state.is_playing();
+            let beat = session_state.beat_at_time(time, quantum);
+            println!(
+                "playing={}, quantum={}, clock={}, tempo={}, beat={}",
+                playing, quantum, time, tempo, beat
+            );
 
-        // UPDATE RENDER:
-        clear_background(GRAY);
+            // UPDATE RENDER:
+            clear_background(GRAY);
+
+            // draw LEDS
+            // ..
+        });
 
         next_frame().await
     }
