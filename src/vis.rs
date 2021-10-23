@@ -1,45 +1,64 @@
 use crate::constants::*;
 use macroquad::prelude::*;
+use macroquad::rand;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub struct RGBA8 {
+pub struct RGB8 {
     r: u8,
     g: u8,
     b: u8,
-    a: u8,
 }
 
-impl RGBA8 {
-    pub fn rgba_to_mq_color(&self) -> Color {
+#[allow(dead_code)]
+impl RGB8 {
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b }
+    }
+    pub fn rgb_to_mq_color(&self) -> Color {
         Color {
-            r: self.r as f32,
-            g: self.g as f32,
-            b: self.b as f32,
-            a: self.a as f32,
+            r: self.r as f32 / 255.0,
+            g: self.g as f32 / 255.0,
+            b: self.b as f32 / 255.0,
+            a: 1.0,
         }
     }
     pub fn default() -> Self {
         Self {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255,
+            r: 50,
+            g: 50,
+            b: 50,
+        }
+    }
+    pub fn new_rnd() -> Self {
+        Self {
+            r: rand::gen_range(0, 255),
+            g: rand::gen_range(0, 255),
+            b: rand::gen_range(0, 255),
         }
     }
 }
 
 pub struct Leds {
-    grid: [[RGBA8; GRID_HEIGHT]; GRID_WIDTH],
+    grid: [[RGB8; GRID_HEIGHT]; GRID_WIDTH],
 }
 
 impl Leds {
     pub fn new() -> Self {
         Self {
-            grid: [[RGBA8::default(); 8]; 8],
+            grid: [[RGB8::default(); 8]; 8],
         }
     }
 
-    pub fn update_clockwise(&mut self, percentage: f32) {}
+    pub fn get_mut_ref_rgb8(&mut self, x: usize, y: usize) -> &mut RGB8 {
+        &mut self.grid[x][y]
+    }
+
+    pub fn update_clockwise(&mut self, percentage: f32, color: RGB8) {
+        let phase = (CLOCK.len() as f32 * percentage).ceil() as usize;
+        for (x, y) in &CLOCK[0..phase] {
+            *self.get_mut_ref_rgb8(*x, *y) = color;
+        }
+    }
 
     pub fn draw_centered(&self) {
         let smaller_side = if WIDTH <= HEIGHT { WIDTH } else { HEIGHT };
@@ -56,7 +75,7 @@ impl Leds {
                 let x = origin_x + distance_between_points * x as f32;
                 let y = origin_y + distance_between_points * y as f32;
 
-                draw_poly(x, y, 12, point_radius, 0.0, point.rgba_to_mq_color());
+                draw_poly(x, y, 32, point_radius, 0.0, point.rgb_to_mq_color());
             }
         }
     }

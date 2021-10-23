@@ -21,11 +21,15 @@ fn window_conf() -> Conf {
 // MAIN:
 #[macroquad::main(window_conf)]
 async fn main() {
-    let link = ableton_link::Link::new(120.0);
+    let mut link = ableton_link::Link::new(120.0);
+    link.enable(true);
+
     let clock = link.clock();
     let quantum = 4.0;
 
     let mut leds = vis::Leds::new();
+    let mut last_phase: f64 = 99.;
+    let mut color = vis::RGB8::new_rnd();
 
     loop {
         clear_background(GRAY);
@@ -43,18 +47,23 @@ async fn main() {
             let tempo = session_state.tempo();
             let playing = session_state.is_playing();
             let beat = session_state.beat_at_time(time, quantum);
-
+            let peers = link.num_peers();
             let phase = session_state.phase_at_time(time, quantum);
 
             let percentage = phase / quantum;
 
             println!(
-                "playing={}, quantum={}, clock={}, tempo={}, beat={}, phase = {}",
-                playing, quantum, time, tempo, beat, phase
+                "play:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
+                playing, quantum, tempo, beat, phase, peers
             );
 
-            // UPDATE RENDER:
-            leds.update_clockwise(percentage as f32);
+            if phase < last_phase {
+                color = vis::RGB8::new_rnd();
+            }
+            last_phase = phase;
+
+            println!("{:?}", color);
+            leds.update_clockwise(percentage as f32, color);
             leds.draw_centered();
         });
 
