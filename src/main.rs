@@ -34,14 +34,12 @@ async fn main() {
     loop {
         clear_background(GRAY);
 
-        // PROCESS INPUT:
         if let "macos" = std::env::consts::OS {
             if is_key_down(KeyCode::LeftSuper) && is_key_down(KeyCode::Q) {
-                return; // return from main -> quit
+                return; // -> quit on macOS
             }
         }
 
-        // GET CURRENT TEMPO AND PHASE
         link.with_app_session_state(|session_state| {
             let time = clock.micros();
             let tempo = session_state.tempo();
@@ -52,17 +50,17 @@ async fn main() {
 
             let percentage = phase / quantum;
 
-            println!(
-                "play:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
-                playing, quantum, tempo, beat, phase, peers
-            );
+            // println!(
+            //     "play:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
+            //     playing, quantum, tempo, beat, phase, peers
+            // );
 
             if phase < last_phase {
                 color = vis::RGB8::new_rnd();
             }
             last_phase = phase;
 
-            println!("{:?}", color);
+            // println!("{:?}", color);
             leds.update_clockwise(percentage as f32, color);
             leds.draw_centered();
         });
