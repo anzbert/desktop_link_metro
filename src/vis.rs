@@ -48,6 +48,7 @@ pub struct Leds {
     grid: [[RGB8; GRID_HEIGHT]; GRID_WIDTH],
 }
 
+#[allow(dead_code)]
 impl Leds {
     pub fn new() -> Self {
         Self {

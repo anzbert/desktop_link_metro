@@ -31,7 +31,7 @@ async fn main() {
     let quantum = 4.0;
 
     let mut leds = vis::Leds::new();
-    let mut last_phase: f64 = 999.;
+    // let mut last_phase: f64 = 999.;
     let mut color = vis::RGB8::new_rnd();
 
     let mut last_beat: f64 = 0.0;
@@ -54,10 +54,10 @@ async fn main() {
 
         link.with_app_session_state(|session_state| {
             let time = clock.micros();
-            let tempo = session_state.tempo();
-            let playing = session_state.is_playing();
+            let _tempo = session_state.tempo();
+            let _playing = session_state.is_playing();
             let beat = session_state.beat_at_time(time, quantum);
-            let peers = link.num_peers();
+            let _peers = link.num_peers();
             let phase = session_state.phase_at_time(time, quantum);
 
             // let frame_delay = get_frame_time();
@@ -68,7 +68,7 @@ async fn main() {
 
             // println!(
             //     "play:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
-            //     playing, quantum, tempo, beat, phase, peers
+            //     _playing, quantum, _tempo, beat, phase, _peers
             // );
 
             // leds.draw_image(
@@ -100,7 +100,7 @@ async fn main() {
                 color = vis::RGB8::new_rnd();
             }
 
-            let percentage = compensated_phase / quantum;
+            // let percentage = compensated_phase / quantum;
             // leds.update_clockwise(percentage as f32, color);
             leds.draw_centered();
         });
