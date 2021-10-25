@@ -11,3 +11,8 @@ ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more re
 macroquad = "*"
 # nalgebra = { version = "*", default-features = false } # no-std nalgebra
 # rand = "*"
+
+gif2json = { git = "https://github.com/anzbert/gif2json" }
+
+[build-dependencies]
+gif2json = { git = "https://github.com/anzbert/gif2json" }

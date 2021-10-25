@@ -9,6 +9,12 @@ pub struct RGB8 {
     b: u8,
 }
 
+fn array_to_coord(input: usize, grid_size_x: usize, grid_size_y: usize) -> (usize, usize) {
+    let x = input % grid_size_x;
+    let y = input / grid_size_y;
+    (x, y)
+}
+
 #[allow(dead_code)]
 impl RGB8 {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
@@ -58,6 +64,18 @@ impl Leds {
         for (x, y) in &CLOCK[0..phase] {
             *self.get_mut_ref_rgb8(*x, *y) = color;
         }
+    }
+
+    pub fn draw_image(&mut self, rgb_vector: Vec<(u8, u8, u8)>) {
+        for (index, pixel) in rgb_vector.iter().enumerate() {
+            let rgb = RGB8::new(pixel.0, pixel.1, pixel.2);
+            let (x, y) = array_to_coord(index, GRID_WIDTH, GRID_HEIGHT);
+            self.update_pixel(x, y, rgb);
+        }
+    }
+
+    pub fn update_pixel(&mut self, x: usize, y: usize, new_color: RGB8) {
+        self.grid[x][y] = new_color;
     }
 
     pub fn draw_centered(&self) {

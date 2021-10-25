@@ -1,6 +1,7 @@
 mod constants;
 mod vis;
 
+use gif2json::RgbImageData;
 use macroquad::prelude::*;
 // use nalgebra::*;
 
@@ -28,11 +29,16 @@ async fn main() {
     let quantum = 4.0;
 
     let mut leds = vis::Leds::new();
-    let mut last_phase: f64 = 99.;
+    let mut last_phase: f64 = 999.;
     let mut color = vis::RGB8::new_rnd();
 
+    let mut last_beat: f64 = 0.0;
+
+    let img_bytes = include_bytes!("../img/test.gif");
+    let led_image1 = RgbImageData::new_from_bytes(img_bytes).unwrap();
+
     loop {
-        clear_background(GRAY);
+        clear_background(Color::new(0.20, 0.20, 0.20, 1.0));
 
         if let "macos" = std::env::consts::OS {
             if is_key_down(KeyCode::LeftSuper) && is_key_down(KeyCode::Q) {
@@ -55,10 +61,23 @@ async fn main() {
             //     playing, quantum, tempo, beat, phase, peers
             // );
 
-            if phase < last_phase {
+            leds.draw_image(
+                led_image1
+                    .get_frame_vec_ref(phase as usize)
+                    .unwrap()
+                    .clone(),
+            );
+
+            // if phase < last_phase {
+            //     color = vis::RGB8::new_rnd();
+            // }
+
+            if beat - last_beat >= 1.0 {
                 color = vis::RGB8::new_rnd();
+                last_beat = beat.floor(); // re-calibrate to full beat
             }
-            last_phase = phase;
+
+            // last_phase = phase;
 
             // println!("{:?}", color);
             leds.update_clockwise(percentage as f32, color);
