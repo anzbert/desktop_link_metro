@@ -60,14 +60,23 @@ impl Leds {
     }
 
     pub fn update_clockwise(&mut self, percentage: f32, color: RGB8) {
-        let phase = (CLOCK.len() as f32 * percentage).ceil() as usize;
+        let perc = if percentage > 1.0 {
+            percentage - 1.0
+        } else {
+            percentage
+        };
+
+        let phase = (CLOCK.len() as f32 * perc).ceil() as usize;
         for (x, y) in &CLOCK[0..phase] {
             *self.get_mut_ref_rgb8(*x, *y) = color;
         }
     }
 
-    pub fn draw_image(&mut self, rgb_vector: Vec<(u8, u8, u8)>) {
+    pub fn draw_image(&mut self, rgb_vector: Vec<(u8, u8, u8, u8)>) {
         for (index, pixel) in rgb_vector.iter().enumerate() {
+            if pixel.3 == 0 {
+                continue;
+            }
             let rgb = RGB8::new(pixel.0, pixel.1, pixel.2);
             let (x, y) = array_to_coord(index, GRID_WIDTH, GRID_HEIGHT);
             self.update_pixel(x, y, rgb);

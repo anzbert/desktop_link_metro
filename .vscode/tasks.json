@@ -4,6 +4,18 @@
 		{
 			"type": "cargo",
 			"command": "run",
+			"args": [
+				"--release"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"label": "rust: cargo run (release)",
+			"group": "build"
+		},
+		{
+			"type": "cargo",
+			"command": "run",
 			"problemMatcher": [
 				"$rustc"
 			],

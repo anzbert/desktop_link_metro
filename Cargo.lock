@@ -338,7 +338,7 @@ dependencies = [
 [[package]]
 name = "gif2json"
 version = "0.1.0"
-source = "git+https://github.com/anzbert/gif2json#2d61963516c904d79bf926c9c95071007f0672a7"
+source = "git+https://github.com/anzbert/gif2json#2df5300398378e75fe7839a9bc37b356d05a9c6e"
 dependencies = [
  "image",
  "serde",
