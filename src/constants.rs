@@ -1,7 +1,7 @@
 pub const LATENCY_COMP: f64 = 0.075;
 
-pub const WIDTH: i32 = 800;
-pub const HEIGHT: i32 = 600;
+pub const WIDTH: i32 = 1000;
+pub const HEIGHT: i32 = 500;
 
 pub const GRID_HEIGHT: usize = 8;
 pub const GRID_WIDTH: usize = 8;

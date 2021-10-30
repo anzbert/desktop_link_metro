@@ -13,6 +13,7 @@ macroquad = "*"
 # rand = "*"
 
 gif2json = { git = "https://github.com/anzbert/gif2json" }
+egui-macroquad = "*"
 
-[build-dependencies]
-gif2json = { git = "https://github.com/anzbert/gif2json" }
+# [build-dependencies]
+# gif2json = { git = "https://github.com/anzbert/gif2json" }
