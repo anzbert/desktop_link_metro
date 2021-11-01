@@ -39,17 +39,3 @@ pub const CLOCK: [(usize, usize); 28] = [
     (2, 0),
     (3, 0),
 ];
-
-// dynamically size and create clock at compile time without using vectors:
-// const fn create_clock_array_size() -> usize {
-//     2 * GRID_HEIGHT + 2 * (GRID_WIDTH - 2)
-// }
-// const fn create_clock_array() -> [(usize, usize); create_clock_array_size()] {
-//     [(0, 0); create_clock_array_size()]
-// }
-
-// fn get_clock_array() -> [(usize, usize); create_clock_array_size()] {
-//     for i in 0..create_clock_array_size() {
-//          for
-//     }
-// }

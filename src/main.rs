@@ -1,7 +1,7 @@
 mod constants;
+mod input;
 mod vis;
 
-use ableton_link::{Clock, SessionState};
 use gif2json::RgbaImageData;
 use macroquad::prelude::*;
 
@@ -11,7 +11,7 @@ use egui_macroquad::*;
 // MQ WINDOW CONFIG:
 fn window_conf() -> Conf {
     Conf {
-        window_title: "rusty metro".to_owned(),
+        window_title: "rusty_metro".to_owned(),
         window_width: constants::WIDTH,
         window_height: constants::HEIGHT,
         high_dpi: false,
@@ -25,6 +25,7 @@ fn window_conf() -> Conf {
 // MAIN:
 #[macroquad::main(window_conf)]
 async fn main() {
+    // Init LINK:
     let mut link = ableton_link::Link::new(120.0);
     link.enable(true);
 
@@ -40,17 +41,17 @@ async fn main() {
     let mut play = false;
     let mut last_play = play;
 
-    // Init Session Values:
+    let mut last_beat: f64 = 0.0;
+    // let mut last_phase: f64 = 999.;
+
     link.with_app_session_state(|ss| {
         tempo = ss.tempo();
         last_tempo = tempo;
     });
 
+    // Init VISUALS:
     let mut leds = vis::Leds::new();
     let mut color = vis::RGB8::new_rnd();
-
-    // let mut last_phase: f64 = 999.;
-    let mut last_beat: f64 = 0.0;
 
     let gif_counter =
         RgbaImageData::new_from_bytes(include_bytes!("../img/counter_alpha.gif")).unwrap();
@@ -59,54 +60,31 @@ async fn main() {
     let gif_circular =
         RgbaImageData::new_from_bytes(include_bytes!("../img/circular.gif")).unwrap();
 
+    // ----------------------------------------------------------------------------------------------------------------
+    // MAIN LOOP
     loop {
         clear_background(Color::new(0.20, 0.20, 0.20, 1.0));
 
-        if let "macos" = std::env::consts::OS {
-            if is_key_down(KeyCode::LeftSuper) && is_key_down(KeyCode::Q) {
-                return; // -> quit on macOS
-            }
-        }
+        // GET KEYBOARD INPUT
+        input::check_keyboard_input();
 
+        // GET CURRENT SESSION STATE:
         link.with_app_session_state(|session_state| {
             let time = clock.micros();
             tempo = session_state.tempo();
-            let playing = session_state.is_playing();
+            play = session_state.is_playing();
             let beat = session_state.beat_at_time(time, quantum);
             let _peers = link.num_peers();
             let phase = session_state.phase_at_time(time, quantum);
-
-            // let frame_delay = get_frame_time();
-            // 60,000 / BPM = BPMS
 
             let compensated_phase = phase + LATENCY_COMP;
             let compensated_beat = beat + LATENCY_COMP;
 
             println!(
                 "playing:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
-                playing, quantum, tempo, beat, phase, _peers
+                play, quantum, tempo, beat, phase, _peers
             );
 
-            // leds.draw_image(
-            //     gif_circular
-            //         .get_frame_vec_ref((compensated_phase * 4.0) as usize)
-            //         .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
-            //         .clone(),
-            // );
-            if playing {
-                leds.draw_image(
-                    gif_rows
-                        .get_frame_vec_ref((compensated_phase * 2.0) as usize)
-                        .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
-                        .clone(),
-                );
-                leds.draw_image(
-                    gif_counter
-                        .get_frame_vec_ref(compensated_phase as usize)
-                        .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
-                        .clone(),
-                );
-            }
             // if phase < last_phase {
             //     color = vis::RGB8::new_rnd();
             // }
@@ -118,10 +96,36 @@ async fn main() {
             }
 
             // let percentage = compensated_phase / quantum;
-            // leds.update_clockwise(percentage as f32, color);
-            leds.draw_centered();
+
+            // UPDATE LED DISPLAY ARRAY:
+            if play {
+                // leds.update_with_image(
+                //     gif_circular
+                //         .get_frame_vec_ref((compensated_phase * 4.0) as usize)
+                //         .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
+                //         .clone(),
+                // );
+
+                leds.update_with_image(
+                    gif_rows
+                        .get_frame_vec_ref((compensated_phase * 2.0) as usize)
+                        .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
+                        .clone(),
+                );
+
+                leds.update_with_image(
+                    gif_counter
+                        .get_frame_vec_ref(compensated_phase as usize)
+                        .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
+                        .clone(),
+                );
+
+                // clock:
+                // leds.update_clockwise(percentage as f32, color);
+            }
         });
 
+        // GET GUI INPUT
         egui_macroquad::ui(|egui_ctx| {
             egui::Window::new("rusty_chain_link")
                 .anchor(egui::Align2::LEFT_TOP, [0.0, 0.0])
@@ -143,17 +147,12 @@ async fn main() {
                 });
         });
 
-        // extern "C" fn callback(x: bool) {
-        //     println!("callback {}", x)
-        // }
-        // link.set_start_stop_callback(callback);
-
+        // UPDATE LINK WITH GUI CHANGES:
         if link_enabled {
             link.enable(true);
         } else {
             link.enable(false);
         }
-
         if !last_tempo.eq(&tempo) {
             link.with_app_session_state(|mut ff| {
                 ff.set_tempo(tempo, clock.micros());
@@ -163,15 +162,19 @@ async fn main() {
         if !last_play.eq(&play) {
             link.with_app_session_state(|mut ff| {
                 ff.set_is_playing(play, clock.micros());
-
                 ff.commit();
             });
         }
-
         last_play = play;
         last_tempo = tempo;
 
+        // DRAW GUI:
         egui_macroquad::draw();
+
+        // DRAW LED ARRAY:
+        leds.draw_centered();
+
+        // AWAIT NEXT FRAME:
         next_frame().await
     }
 }

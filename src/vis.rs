@@ -2,17 +2,18 @@ use crate::constants::*;
 use macroquad::prelude::*;
 use macroquad::rand;
 
+// helper functions:
+fn array_to_coord(input: usize, grid_size_x: usize, grid_size_y: usize) -> (usize, usize) {
+    let x = input % grid_size_x;
+    let y = input / grid_size_y;
+    (x, y)
+}
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct RGB8 {
     r: u8,
     g: u8,
     b: u8,
-}
-
-fn array_to_coord(input: usize, grid_size_x: usize, grid_size_y: usize) -> (usize, usize) {
-    let x = input % grid_size_x;
-    let y = input / grid_size_y;
-    (x, y)
 }
 
 #[allow(dead_code)]
@@ -73,7 +74,7 @@ impl Leds {
         }
     }
 
-    pub fn draw_image(&mut self, rgb_vector: Vec<(u8, u8, u8, u8)>) {
+    pub fn update_with_image(&mut self, rgb_vector: Vec<(u8, u8, u8, u8)>) {
         for (index, pixel) in rgb_vector.iter().enumerate() {
             if pixel.3 == 0 {
                 continue;
