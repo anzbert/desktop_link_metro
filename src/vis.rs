@@ -43,6 +43,11 @@ impl RGB8 {
             b: rand::gen_range(0, 255),
         }
     }
+    // pub fn set_to(&mut self, r: u8, g: u8, b: u8) {
+    //     self.r = r;
+    //     self.g = g;
+    //     self.b = b;
+    // }
 }
 
 pub struct Leds {
@@ -59,6 +64,14 @@ impl Leds {
 
     pub fn get_mut_ref_rgb8(&mut self, x: usize, y: usize) -> &mut RGB8 {
         &mut self.grid[x][y]
+    }
+
+    pub fn update_off(&mut self) {
+        for x in 0..GRID_WIDTH {
+            for y in 0..GRID_HEIGHT {
+                self.update_pixel(x, y, RGB8::new(0, 0, 0))
+            }
+        }
     }
 
     pub fn update_clockwise(&mut self, percentage: f32, color: RGB8) {

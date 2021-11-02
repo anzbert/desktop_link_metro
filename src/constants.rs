@@ -1,5 +1,3 @@
-pub const LATENCY_COMP: f64 = 0.075;
-
 pub const WIDTH: i32 = 1000;
 pub const HEIGHT: i32 = 500;
 

@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# ableton-link = { path = "ableton-link-rs" } # more recent fork than crates.io
 ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than crates.io
 
 macroquad = "*"

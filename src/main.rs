@@ -5,7 +5,6 @@ mod vis;
 use gif2json::RgbaImageData;
 use macroquad::prelude::*;
 
-use crate::constants::LATENCY_COMP;
 use egui_macroquad::*;
 
 // MQ WINDOW CONFIG:
@@ -44,18 +43,31 @@ async fn main() {
     let mut last_beat: f64 = 0.0;
     // let mut last_phase: f64 = 999.;
 
+    let mut latency_comp = 0.05;
+
     link.with_app_session_state(|ss| {
         tempo = ss.tempo();
         last_tempo = tempo;
     });
 
     // Init VISUALS:
+    #[derive(PartialEq, Debug)]
+    enum Vis {
+        Off,
+        One,
+        Two,
+        Three,
+    }
+    let mut vis_selected = Vis::Off;
+
+    let mut vis_numbers = true;
+
     let mut leds = vis::Leds::new();
     let mut color = vis::RGB8::new_rnd();
 
     let gif_counter =
         RgbaImageData::new_from_bytes(include_bytes!("../img/counter_alpha.gif")).unwrap();
-    let gif_clock = RgbaImageData::new_from_bytes(include_bytes!("../img/clock.gif")).unwrap();
+    // let gif_clock = RgbaImageData::new_from_bytes(include_bytes!("../img/clock.gif")).unwrap();
     let gif_rows = RgbaImageData::new_from_bytes(include_bytes!("../img/rows_alpha.gif")).unwrap();
     let gif_circular =
         RgbaImageData::new_from_bytes(include_bytes!("../img/circular.gif")).unwrap();
@@ -77,51 +89,57 @@ async fn main() {
             let _peers = link.num_peers();
             let phase = session_state.phase_at_time(time, quantum);
 
-            let compensated_phase = phase + LATENCY_COMP;
-            let compensated_beat = beat + LATENCY_COMP;
+            let compensated_phase = phase + latency_comp;
+            let compensated_beat = beat + latency_comp;
 
-            println!(
-                "playing:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
-                play, quantum, tempo, beat, phase, _peers
-            );
-
-            // if phase < last_phase {
-            //     color = vis::RGB8::new_rnd();
-            // }
-            // last_phase = phase;
+            // println!(
+            //     "playing:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
+            //     play, quantum, tempo, beat, phase, _peers
+            // );
 
             if compensated_beat - last_beat >= 1.0 {
                 last_beat = compensated_beat.floor(); // re-calibrate to full beat
                 color = vis::RGB8::new_rnd();
             }
 
-            // let percentage = compensated_phase / quantum;
+            let percentage = compensated_phase / quantum;
 
             // UPDATE LED DISPLAY ARRAY:
             if play {
-                // leds.update_with_image(
-                //     gif_circular
-                //         .get_frame_vec_ref((compensated_phase * 4.0) as usize)
-                //         .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
-                //         .clone(),
-                // );
+                match vis_selected {
+                    Vis::Off => {
+                        leds.update_off();
+                    }
+                    Vis::One => {
+                        leds.update_with_image(
+                            gif_circular
+                                .get_frame_vec_ref((compensated_phase * 4.0) as usize)
+                                .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
+                                .clone(),
+                        );
+                    }
+                    Vis::Two => {
+                        leds.update_with_image(
+                            gif_rows
+                                .get_frame_vec_ref((compensated_phase * 2.0) as usize)
+                                .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
+                                .clone(),
+                        );
+                    }
+                    Vis::Three => {
+                        leds.update_off();
+                        leds.update_clockwise(percentage as f32, color);
+                    }
+                }
 
-                leds.update_with_image(
-                    gif_rows
-                        .get_frame_vec_ref((compensated_phase * 2.0) as usize)
-                        .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
-                        .clone(),
-                );
-
-                leds.update_with_image(
-                    gif_counter
-                        .get_frame_vec_ref(compensated_phase as usize)
-                        .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
-                        .clone(),
-                );
-
-                // clock:
-                // leds.update_clockwise(percentage as f32, color);
+                if vis_numbers {
+                    leds.update_with_image(
+                        gif_counter
+                            .get_frame_vec_ref(compensated_phase as usize)
+                            .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
+                            .clone(),
+                    );
+                }
             }
         });
 
@@ -133,10 +151,11 @@ async fn main() {
                 .min_width(constants::WIDTH as f32 * 0.15)
                 .show(egui_ctx, |ui| {
                     ui.add(
-                        egui::Slider::new(&mut quantum, 1.0..=8.0)
+                        egui::Slider::new(&mut quantum, 2.0..=4.0)
                             .integer()
                             .text("quantum"),
                     );
+                    ui.add(egui::Slider::new(&mut latency_comp, 0.0..=0.1).text("latency comp"));
                     ui.add(egui::Checkbox::new(&mut link_enabled, "link enabled?"));
                     ui.add(egui::Checkbox::new(&mut play, "start/stop?"));
                     ui.add(
@@ -144,6 +163,31 @@ async fn main() {
                             .integer()
                             .text("bpm"),
                     );
+                    ui.add(egui::Checkbox::new(&mut vis_numbers, "numbers?"));
+                    egui::ComboBox::from_label("select vis")
+                        .selected_text(format!("{:?}", vis_selected))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut vis_selected,
+                                Vis::Off,
+                                format!("{:?}", Vis::Off),
+                            );
+                            ui.selectable_value(
+                                &mut vis_selected,
+                                Vis::One,
+                                format!("{:?}", Vis::One),
+                            );
+                            ui.selectable_value(
+                                &mut vis_selected,
+                                Vis::Two,
+                                format!("{:?}", Vis::Two),
+                            );
+                            ui.selectable_value(
+                                &mut vis_selected,
+                                Vis::Three,
+                                format!("{:?}", Vis::Three),
+                            );
+                        });
                 });
         });
 
