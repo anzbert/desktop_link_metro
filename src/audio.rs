@@ -6,8 +6,9 @@ use rodio::{source::Source, Decoder, OutputStream};
 use std::io::Cursor;
 
 // use cpal::traits::HostTrait;
+
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::Data;
+use cpal::{Data, Sample, SampleFormat};
 
 pub fn audio_thread_cpal() {
     let host = cpal::default_host();
@@ -21,15 +22,21 @@ pub fn audio_thread_cpal() {
         .next()
         .expect("no supported config?!")
         .with_max_sample_rate();
+    let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+    let sample_format = supported_config.sample_format();
     let config = supported_config.into();
+    let _stream = match sample_format {
+        SampleFormat::F32 => device.build_output_stream(&config, write_silence::<f32>, err_fn),
+        SampleFormat::I16 => device.build_output_stream(&config, write_silence::<i16>, err_fn),
+        SampleFormat::U16 => device.build_output_stream(&config, write_silence::<u16>, err_fn),
+    }
+    .unwrap();
 
-    fn write_to_stream() {}
-
-    let stream = device.build_output_stream(
-        &config,
-        move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {},
-        move |err| println!("error: {:?}", err),
-    );
+    fn write_silence<T: Sample>(data: &mut [T], _: &cpal::OutputCallbackInfo) {
+        for sample in data.iter_mut() {
+            *sample = Sample::from(&0.0);
+        }
+    }
 
     // let (audio_tx, audio_rx): (SyncSender<bool>, Receiver<bool>) = sync_channel(1);
 
