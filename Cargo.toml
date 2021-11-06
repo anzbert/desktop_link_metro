@@ -6,14 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than crates.io
+ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than on crates.io
 
-macroquad = "*"
-# nalgebra = { version = "*", default-features = false } # no-std nalgebra
-# rand = "*"
+macroquad = "0.3"
+# nalgebra = "*"
 
-gif2json = { git = "https://github.com/anzbert/gif2json" }
-egui-macroquad = "*"
+gif2json = { git = "https://github.com/anzbert/gif2json" } # homemade gif-to-rgba converter
+egui-macroquad = "0.7"
+
+rodio = "0.14"
+cpal = "0.13"
 
 # [build-dependencies]
-# gif2json = { git = "https://github.com/anzbert/gif2json" }

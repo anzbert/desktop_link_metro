@@ -8,6 +8,10 @@ pub const POINT_MARGIN: f32 = 0.9;
 
 #[allow(unused_allocation)]
 pub const CLOCK: [(usize, usize); 28] = [
+    (0, 0),
+    (1, 0),
+    (2, 0),
+    (3, 0),
     (4, 0),
     (5, 0),
     (6, 0),
@@ -32,8 +36,4 @@ pub const CLOCK: [(usize, usize); 28] = [
     (0, 3),
     (0, 2),
     (0, 1),
-    (0, 0),
-    (1, 0),
-    (2, 0),
-    (3, 0),
 ];

@@ -1,3 +1,4 @@
+mod audio;
 mod constants;
 mod input;
 mod vis;
@@ -24,6 +25,8 @@ fn window_conf() -> Conf {
 // MAIN:
 #[macroquad::main(window_conf)]
 async fn main() {
+    let audio_tx = audio::metro_audio_init();
+
     // Init LINK:
     let mut link = ableton_link::Link::new(120.0);
     link.enable(true);
@@ -43,12 +46,14 @@ async fn main() {
     let mut last_beat: f64 = 0.0;
     // let mut last_phase: f64 = 999.;
 
-    let mut latency_comp = 0.05;
+    let mut latency_comp = 0.0;
 
     link.with_app_session_state(|ss| {
         tempo = ss.tempo();
         last_tempo = tempo;
     });
+
+    // INIT SOUND
 
     // Init VISUALS:
     #[derive(PartialEq, Debug)]
@@ -57,6 +62,7 @@ async fn main() {
         One,
         Two,
         Three,
+        Four,
     }
     let mut vis_selected = Vis::Off;
 
@@ -67,7 +73,7 @@ async fn main() {
 
     let gif_counter =
         RgbaImageData::new_from_bytes(include_bytes!("../img/counter_alpha.gif")).unwrap();
-    // let gif_clock = RgbaImageData::new_from_bytes(include_bytes!("../img/clock.gif")).unwrap();
+    let gif_clock = RgbaImageData::new_from_bytes(include_bytes!("../img/clock.gif")).unwrap();
     let gif_rows = RgbaImageData::new_from_bytes(include_bytes!("../img/rows_alpha.gif")).unwrap();
     let gif_circular =
         RgbaImageData::new_from_bytes(include_bytes!("../img/circular.gif")).unwrap();
@@ -81,6 +87,7 @@ async fn main() {
         input::check_keyboard_input();
 
         // GET CURRENT SESSION STATE:
+
         link.with_app_session_state(|session_state| {
             let time = clock.micros();
             tempo = session_state.tempo();
@@ -89,6 +96,7 @@ async fn main() {
             let _peers = link.num_peers();
             let phase = session_state.phase_at_time(time, quantum);
 
+            // latency compensation - doesnt work well
             let compensated_phase = phase + latency_comp;
             let compensated_beat = beat + latency_comp;
 
@@ -97,12 +105,17 @@ async fn main() {
             //     play, quantum, tempo, beat, phase, _peers
             // );
 
+            // random colour change after every beat:
             if compensated_beat - last_beat >= 1.0 {
                 last_beat = compensated_beat.floor(); // re-calibrate to full beat
                 color = vis::RGB8::new_rnd();
+
+                // play sound
+                audio_tx.send(0).unwrap();
             }
 
-            let percentage = compensated_phase / quantum;
+            // for clock vis:
+            let phase_percentage = compensated_phase / quantum;
 
             // UPDATE LED DISPLAY ARRAY:
             if play {
@@ -113,7 +126,7 @@ async fn main() {
                     Vis::One => {
                         leds.update_with_image(
                             gif_circular
-                                .get_frame_vec_ref((compensated_phase * 4.0) as usize)
+                                .get_frame_vec_ref((phase_percentage * 16.0) as usize)
                                 .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
                                 .clone(),
                         );
@@ -121,14 +134,22 @@ async fn main() {
                     Vis::Two => {
                         leds.update_with_image(
                             gif_rows
-                                .get_frame_vec_ref((compensated_phase * 2.0) as usize)
+                                .get_frame_vec_ref((phase_percentage * 8.0) as usize)
                                 .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
                                 .clone(),
                         );
                     }
                     Vis::Three => {
                         leds.update_off();
-                        leds.update_clockwise(percentage as f32, color);
+                        leds.update_clockwise(phase_percentage as f32, color);
+                    }
+                    Vis::Four => {
+                        leds.update_with_image(
+                            gif_clock
+                                .get_frame_vec_ref((phase_percentage * 4.0) as usize)
+                                .unwrap_or_else(|| gif_clock.get_frame_vec_ref(0).unwrap())
+                                .clone(),
+                        );
                     }
                 }
 
@@ -187,6 +208,11 @@ async fn main() {
                                 Vis::Three,
                                 format!("{:?}", Vis::Three),
                             );
+                            ui.selectable_value(
+                                &mut vis_selected,
+                                Vis::Four,
+                                format!("{:?}", Vis::Four),
+                            );
                         });
                 });
         });
@@ -209,14 +235,15 @@ async fn main() {
                 ff.commit();
             });
         }
+
         last_play = play;
         last_tempo = tempo;
 
-        // DRAW GUI:
-        egui_macroquad::draw();
-
         // DRAW LED ARRAY:
         leds.draw_centered();
+
+        // DRAW GUI:
+        egui_macroquad::draw();
 
         // AWAIT NEXT FRAME:
         next_frame().await
