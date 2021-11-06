@@ -62,7 +62,7 @@ async fn main() {
         Three,
         Four,
     }
-    let mut vis_selected = Vis::Off;
+    let mut vis_selected = Vis::One;
 
     let mut vis_numbers = true;
 
@@ -182,7 +182,7 @@ async fn main() {
                     );
                     ui.add(egui::Slider::new(&mut latency_comp, 0.0..=0.1).text("latency comp"));
                     ui.add(
-                        egui::Slider::new(&mut tempo, 20.0..=999.0)
+                        egui::Slider::new(&mut tempo, 20.0..=200.0)
                             .integer()
                             .text("bpm"),
                     );
