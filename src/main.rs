@@ -122,9 +122,7 @@ async fn main() {
             if vis_on {
                 let phase_percentage = compensated_phase / quantum;
                 match vis_selected {
-                    Vis::Off => {
-                        leds.update_off();
-                    }
+                    Vis::Off => leds.update_off(),
                     Vis::One => {
                         leds.update_with_image(
                             gif_circular
