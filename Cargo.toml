@@ -1,17 +1,16 @@
 [package]
 name = "desktop_link_metro"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than on crates.io
-
-macroquad = "0.3"
+# ableton-link = { git = "https://github.com/jmyhrman/ableton-link-rs" } # more recent fork than on crates.io
+rusty_link = "^0.4.4"
+macroquad = "^0.4.13"
 
 gif2json = { git = "https://github.com/anzbert/gif2json" } # homemade gif-to-rgba converter
-egui-macroquad = "0.7"
+egui-macroquad = "^0.15.0"
 
-rodio = "0.14"
-cpal = "0.13"
+# rodio = "^0.19.0"

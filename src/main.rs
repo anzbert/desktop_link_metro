@@ -1,12 +1,12 @@
-mod audio;
+// mod audio;
 mod constants;
 mod input;
 mod vis;
 
-use gif2json::RgbaImageData;
+use egui_macroquad::egui;
 use macroquad::prelude::*;
-
-use egui_macroquad::*;
+// use egui_macroquad::*;
+use gif2json::RgbaImageData;
 
 // MQ WINDOW CONFIG:
 fn window_conf() -> Conf {
@@ -25,31 +25,29 @@ fn window_conf() -> Conf {
 // MAIN:
 #[macroquad::main(window_conf)]
 async fn main() {
-    // INIT SOUND
-    let audio_tx = audio::metro_audio_init();
-    let mut sound_on = true;
+    // // INIT SOUND
+    // let audio_tx = audio::metro_audio_init();
+    // let mut sound_on = true;
 
     // Init LINK:
-    let mut link = ableton_link::Link::new(120.0);
+    let link = rusty_link::AblLink::new(120.0);
+    let mut session_state = rusty_link::SessionState::new();
+
     link.enable(true);
 
     let mut link_enabled = true;
     link.enable_start_stop_sync(true);
 
-    let clock = link.clock();
+    // let clock = link.clock_micros();
     let mut quantum = 4.0;
-
-    let mut tempo: f64 = 0.0;
-    let mut last_tempo: f64 = 0.0;
 
     let mut last_beat: f64 = 0.0;
 
     let mut latency_comp = 0.0;
 
-    link.with_app_session_state(|ss| {
-        tempo = ss.tempo();
-        last_tempo = tempo;
-    });
+    link.capture_app_session_state(&mut session_state);
+    let mut tempo = session_state.tempo();
+    let mut last_tempo = tempo;
 
     // Init VISUALS:
     let mut vis_on = true;
@@ -85,84 +83,84 @@ async fn main() {
         input::check_keyboard_input();
 
         // GET CURRENT SESSION STATE:
-        link.with_app_session_state(|session_state| {
-            tempo = session_state.tempo();
-            let time = clock.micros();
-            let beat = session_state.beat_at_time(time, quantum);
-            let phase = session_state.phase_at_time(time, quantum);
+        link.capture_app_session_state(&mut session_state);
+        tempo = session_state.tempo();
 
-            let _peers = link.num_peers();
-            let _play = session_state.is_playing();
+        let time = link.clock_micros();
+        let beat = session_state.beat_at_time(time, quantum);
+        let phase = session_state.phase_at_time(time, quantum);
 
-            // latency compensation - this idea doesnt work too well yet
-            let compensated_phase = phase + latency_comp;
-            let compensated_beat = beat + latency_comp;
+        let _peers = link.num_peers();
+        let _play = session_state.is_playing();
 
-            // println!(
-            //     "playing:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
-            //     _play, quantum, tempo, beat, phase, _peers
-            // );
+        // latency compensation - this idea doesnt work too well yet
+        let compensated_phase = phase + latency_comp;
+        let compensated_beat = beat + latency_comp;
 
-            // ROUTINE (on every full beat):
-            if compensated_beat - last_beat >= 1.0 {
-                last_beat = compensated_beat.floor(); // re-calibrate to full beat
+        // println!(
+        //     "playing:{}, q:{:.2}, tempo:{:.2}, beat:{:.2}, phase:{:.2}, peers:{}",
+        //     _play, quantum, tempo, beat, phase, _peers
+        // );
 
-                new_color_on_beat = vis::RGB8::new_rnd(); // change this color value every beat
+        // ROUTINE (on every full beat):
+        if compensated_beat - last_beat >= 1.0 {
+            last_beat = compensated_beat.floor(); // re-calibrate to full beat
 
-                if sound_on {
-                    // play sound with emphasis on the 1
-                    match phase.floor() as i32 {
-                        0 => audio_tx.send(1).unwrap(),
-                        _ => audio_tx.send(0).unwrap(),
-                    }
-                }
-            }
+            new_color_on_beat = vis::RGB8::new_rnd(); // change this color value every beat
 
-            // UPDATE LED DISPLAY ARRAY (every frame):
-            if vis_on {
-                let phase_percentage = compensated_phase / quantum;
-                match vis_selected {
-                    Vis::Off => leds.update_off(),
-                    Vis::One => {
-                        leds.update_with_image(
-                            gif_circular
-                                .get_frame_vec_ref((phase_percentage * 16.0) as usize)
-                                .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
-                                .clone(),
-                        );
-                    }
-                    Vis::Two => {
-                        leds.update_with_image(
-                            gif_rows
-                                .get_frame_vec_ref((phase_percentage * 8.0) as usize)
-                                .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
-                                .clone(),
-                        );
-                    }
-                    Vis::Three => {
-                        leds.update_off();
-                        leds.update_clockwise(phase_percentage as f32, new_color_on_beat);
-                    }
-                    Vis::Four => {
-                        leds.update_with_image(
-                            gif_clock
-                                .get_frame_vec_ref((phase_percentage * 4.0) as usize)
-                                .unwrap_or_else(|| gif_clock.get_frame_vec_ref(0).unwrap())
-                                .clone(),
-                        );
-                    }
-                }
+            // if sound_on {
+            //     // play sound with emphasis on the 1
+            //     match phase.floor() as i32 {
+            //         0 => audio_tx.send(1).unwrap(),
+            //         _ => audio_tx.send(0).unwrap(),
+            //     }
+            // }
+        }
 
-                if vis_numbers {
+        // UPDATE LED DISPLAY ARRAY (every frame):
+        if vis_on {
+            let phase_percentage = compensated_phase / quantum;
+            match vis_selected {
+                Vis::Off => leds.update_off(),
+                Vis::One => {
                     leds.update_with_image(
-                        gif_counter
-                            .get_frame_vec_ref(compensated_phase as usize)
-                            .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
+                        gif_circular
+                            .get_frame_vec_ref((phase_percentage * 16.0) as usize)
+                            .unwrap_or_else(|| gif_circular.get_frame_vec_ref(0).unwrap())
+                            .clone(),
+                    );
+                }
+                Vis::Two => {
+                    leds.update_with_image(
+                        gif_rows
+                            .get_frame_vec_ref((phase_percentage * 8.0) as usize)
+                            .unwrap_or_else(|| gif_rows.get_frame_vec_ref(0).unwrap())
+                            .clone(),
+                    );
+                }
+                Vis::Three => {
+                    leds.update_off();
+                    leds.update_clockwise(phase_percentage as f32, new_color_on_beat);
+                }
+                Vis::Four => {
+                    leds.update_with_image(
+                        gif_clock
+                            .get_frame_vec_ref((phase_percentage * 4.0) as usize)
+                            .unwrap_or_else(|| gif_clock.get_frame_vec_ref(0).unwrap())
                             .clone(),
                     );
                 }
             }
-        });
+
+            if vis_numbers {
+                leds.update_with_image(
+                    gif_counter
+                        .get_frame_vec_ref(compensated_phase as usize)
+                        .unwrap_or_else(|| gif_counter.get_frame_vec_ref(0).unwrap())
+                        .clone(),
+                );
+            }
+        }
 
         // DEFINE GUI LAYOUT
         egui_macroquad::ui(|egui_ctx| {
@@ -184,7 +182,7 @@ async fn main() {
                             .integer()
                             .text("bpm"),
                     );
-                    ui.add(egui::Checkbox::new(&mut sound_on, "sound?"));
+                    // ui.add(egui::Checkbox::new(&mut sound_on, "sound?"));
                     ui.add(egui::Checkbox::new(&mut vis_on, "update vis?"));
                     ui.add(egui::Checkbox::new(&mut vis_numbers, "numbers?"));
                     egui::ComboBox::from_label("select vis")
@@ -226,10 +224,10 @@ async fn main() {
             link.enable(false);
         }
         if !last_tempo.eq(&tempo) {
-            link.with_app_session_state(|mut ff| {
-                ff.set_tempo(tempo, clock.micros());
-                ff.commit();
-            });
+            link.capture_app_session_state(&mut session_state);
+            session_state.set_tempo(tempo, link.clock_micros());
+            link.commit_app_session_state(&session_state);
+
             last_tempo = tempo;
         }
 
